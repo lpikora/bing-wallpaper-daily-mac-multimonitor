@@ -19,5 +19,3 @@ MAILTO=""
 ```
 
 This will run script every 30 minutes (but download new image only when it change).
-
-
