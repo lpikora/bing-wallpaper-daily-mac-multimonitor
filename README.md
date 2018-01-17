@@ -1,5 +1,8 @@
 # Bash Script for download and set Bing Daily Wallpaper on all monitors for macOS
 
+![alt text](https://raw.githubusercontent.com/lpikora/bing-wallpaper-daily-mac-multimonitor/images/example-bing-animation.gif)
+
+
 ## Run script
 First add execute rights to script file. Run `chmod +x bing-wallpaper.sh` in terminal.
 
