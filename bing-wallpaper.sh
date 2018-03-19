@@ -96,7 +96,7 @@ if [ $? -eq 0 ]; then
         grep -Eo "url:'.*?'" | \
         sed -e "s/url:'\([^']*\)'.*/$PROTO:\/\/bing.com\1/" | \
         sed -e "s/\\\//g" | \
-        sed -e "s/\([[:digit:]]*x[[:digit:]]*\)/$RESOLUTION/") )
+        sed -e "s/\([[:digit:]][[:digit:]]*x[[:digit:]][[:digit:]]*\)/$RESOLUTION/") )
 
     for p in "${urls[@]}"; do
         filename=$(echo "$p"|sed -e "s/.*\/\(.*\)/\1/")
