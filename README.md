@@ -44,19 +44,19 @@ Press `control + x` then `y` and `enter`
 
 This will run script every 30 minutes (but download new image only when it change).
 
+## Download wallpaper in UHD resolution
+
+Add `-r UHD` parameter after `bing-wallpaper-daily-mac-multimonitor` command:
+
+```sh
+bing-wallpaper-daily-mac-multimonitor -r UHD
+```
+
 ## Usage (without npm)
 
 First add execute rights to script file. Run `chmod +x bing-wallpaper.sh` in terminal.
 
 Executing `./bing-wallpaper.sh` in terminal downloads today's Bing Wallpaper image to `your-home/Pictures/bing-wallpapers/` and sets it as a wallpaper on all your connected monitors.
-
-## Download wallpaper in UHD resolution
-
-Add `-r UHD` parameter after `./bing-wallpaper.sh`
-
-```sh
-./bing-wallpaper.sh -r UHD
-```
 
 ## Set wallpaper automatically every day
 
