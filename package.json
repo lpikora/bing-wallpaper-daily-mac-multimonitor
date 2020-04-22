@@ -9,7 +9,8 @@
     "release:patch": "npm version patch",
     "release:minor": "npm version minor",
     "release:major": "npm version major",
-    "version": "git add ."
+    "version": "git add .",
+    "postversion": "git push && git push --follow-tags"
   },
   "repository": {
     "type": "git",
