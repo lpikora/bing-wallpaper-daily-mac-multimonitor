@@ -3,7 +3,7 @@ PATH=/usr/local/bin:/usr/local/sbin:~/bin:/usr/bin:/bin:/usr/sbin:/sbin
 
 readonly SCRIPT=$(basename "$0")
 readonly VERSION='1.0.0'
-readonly RESOLUTIONS=(1920x1200 1920x1080 800x480 400x240)
+readonly RESOLUTIONS=(1920x1200 UHD)
 
 usage() {
 cat <<EOF
@@ -89,29 +89,23 @@ done
 # Create picture directory if it doesn't already exist
 mkdir -p "${PICTURE_DIR}"
 
-wget -q --spider http://google.com
-if [ $? -eq 0 ]; then
-    # Parse bing.com and acquire picture URL(s)
-    urls=( $(curl -sL $PROTO://www.bing.com | \
-        grep -Eo "url:'.*?'" | \
-        sed -e "s/url:'\([^']*\)'.*/$PROTO:\/\/bing.com\1/" | \
-        sed -e "s/\\\//g" | \
-        sed -e "s/\([[:digit:]][[:digit:]]*x[[:digit:]][[:digit:]]*\)/$RESOLUTION/") )
+# Parse bing.com and acquire picture URL(s)
+FILEURL=( $(curl -sL https://www.bing.com | \
+    grep -Eo "th\?id=.*?.jpg" | \
+    sed -e "s/tmb/$RESOLUTION/"))
 
-    for p in "${urls[@]}"; do
-        filename=$(echo "$p"|sed -e "s/.*\/\(.*\)/\1/")
-        if [ $FORCE ] || [ ! -f "$PICTURE_DIR/$filename" ]; then
-            find $PICTURE_DIR -type f -iname \*.jpg -delete
-            print_message "Downloading: $filename..."
-            curl -Lo "$PICTURE_DIR/$filename" "$p"
-        else
-            print_message "Skipping download: $filename..."
-        fi
-        osascript -e 'tell application "System Events" to tell every desktop to set picture to "'$PICTURE_DIR/$filename'"'
-    done
+FILENAME=${FILEURL/th\?id=/}
 
+FILEWHOLEURL="$PROTO://bing.com/$FILEURL"
+
+if [ $FORCE ] || [ ! -f "$PICTURE_DIR/$FILENAME" ]; then
+    find $PICTURE_DIR -type f -iname \*.jpg -delete
+    print_message "Downloading: $FILENAME..."
+    curl -Lo "$PICTURE_DIR/$FILENAME" "$FILEWHOLEURL"
 else
-    print_message "No internet connection..."
+    print_message "Skipping download: $FILENAME..."
 fi
+osascript -e 'tell application "System Events" to tell every desktop to set picture to "'$PICTURE_DIR/$FILENAME'"'
+
 
 
