@@ -2,13 +2,63 @@
 
 ![alt text](https://raw.githubusercontent.com/lpikora/bing-wallpaper-daily-mac-multimonitor/images/example-bing-animation.gif)
 
-## Run script
+## Usage (with npm)
+
+(How install use script without npm see `Usage (without npm)` below)
+
+First install Node.js https://nodejs.org/en/
+
+Then in terminal
+
+```
+npm -g install bing-wallpaper-daily-mac-multimonitor
+```
+
+then run in terminal
+
+```
+bing-wallpaper-daily-mac-multimonitor
+```
+
+It will download current bing.com wallpaper to `~/Pictures/bing-wallpapers/` and set as wallpaper on all your monitors.
+
+## Set wallpaper automatically every day
+
+You need to edit crontab in order to run script periodically.
+
+In terminal
+
+```sh
+export EDITOR=nano && crontab -e
+```
+
+copy and paste crontab script:
+
+```
+MAILTO=""
+# min hour mday month wday command
+*/30 * * * * bing-wallpaper-daily-mac-multimonitor
+```
+
+Press `control + x` then `y` and `enter`
+
+This will run script every 30 minutes (but download new image only when it change).
+
+## Usage (without npm)
 
 First add execute rights to script file. Run `chmod +x bing-wallpaper.sh` in terminal.
 
 Executing `./bing-wallpaper.sh` in terminal downloads today's Bing Wallpaper image to `your-home/Pictures/bing-wallpapers/` and sets it as a wallpaper on all your connected monitors.
 
-## Set wallpaper automaticly every day
+## Download wallpaper in UHD resolution
+
+Add `-r UHD` parameter after `./bing-wallpaper.sh`
+
+```sh
+./bing-wallpaper.sh -r UHD
+```
+
+## Set wallpaper automatically every day
 
 You can periodically run the script using cron.
 
@@ -37,11 +87,3 @@ MAILTO=""
 ```
 
 This will run script every 30 minutes (but download new image only when it change).
-
-## Download wallpaper in UHD resolution
-
-Add `-r UHD` parameter after `./bing-wallpaper.sh`
-
-```sh
-./bing-wallpaper.sh -r UHD
-```
