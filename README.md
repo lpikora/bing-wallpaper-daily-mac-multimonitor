@@ -2,13 +2,17 @@
 
 ![alt text](https://raw.githubusercontent.com/lpikora/bing-wallpaper-daily-mac-multimonitor/images/example-bing-animation.gif)
 
+## How it works?
+
+Script downloads current Bing Daily Wallpaper to `~/Pictures/bing-wallpapers/` and sets it as wallpaper on all your monitors.
+
 ## Usage (with npm)
 
 (How install use script without npm see `Usage (without npm)` below)
 
-First install Node.js https://nodejs.org/en/
+1. First install Node.js https://nodejs.org/en/
 
-Then in terminal
+2. For getting current Bing Daily Wallpaper to your desktop run in terminal:
 
 ```
 npx bing-wallpaper-daily-mac-multimonitor
@@ -26,9 +30,31 @@ then run in terminal
 bing-wallpaper-daily-mac-multimonitor
 ```
 
-It will download current bing.com wallpaper to `~/Pictures/bing-wallpapers/` and set as wallpaper on all your monitors.
+3. For automatic setup of wallpaper every day contine with instructions below
+
+## Usage (without npm)
+
+Run `./bing-wallpaper.sh` terminal for a single download of current Bing image.
 
 ## Set wallpaper automatically every day
+
+### Using launchd (recommended way)
+
+1. Copy `com.bing-wallpaper-daily-mac-multimonitor.plist` or `com.bing-wallpaper-daily-mac-multimonitor-uhd.plist` (for UHD 4K images) to `~/Library/LaunchAgents/`
+
+2. Copy `bing-wallpaper.sh` to `~/bing-wallpaper.sh`
+
+3. Run `launchctl load -w ~/Library/LaunchAgents/com.bing-wallpaper-daily-mac-multimonitor.plist` or `launchctl load -w ~/Library/LaunchAgents/com.bing-wallpaper-daily-mac-multimonitor.plist` in terminal (it can ask for permitions for the first time)
+
+#### How it works?
+
+It runs `bing-wallpaper.sh` every 30 minutes and download (if not downloaded already) and set new wallpaper to your desktops.
+
+Optionally you can edit `com.bing-wallpaper-daily-mac-multimonitor.plist` file to run script in different interval or schedule runs on specific time of day. (run `launchctl unload -w ~/Library/LaunchAgents/com.bing-wallpaper-daily-mac-multimonitor.plist` edit plist file and again load it)
+
+For More info about launchd see https://www.launchd.info/ Configuration section.
+
+### Using cron
 
 You need to edit crontab in order to run script periodically.
 
@@ -52,44 +78,14 @@ This will run script every 30 minutes (but download new image only when it chang
 
 ## Download wallpaper in UHD resolution
 
-Add `-r UHD` parameter after `bing-wallpaper-daily-mac-multimonitor` command:
+Add `-r UHD` parameter after `bing-wallpaper-daily-mac-multimonitor` or `./bing-wallpaper.sh` command:
 
 ```sh
 bing-wallpaper-daily-mac-multimonitor -r UHD
 ```
 
-## Usage (without npm)
-
-First add execute rights to script file. Run `chmod +x bing-wallpaper.sh` in terminal.
-
-Executing `./bing-wallpaper.sh` in terminal downloads today's Bing Wallpaper image to `your-home/Pictures/bing-wallpapers/` and sets it as a wallpaper on all your connected monitors.
-
-## Set wallpaper automatically every day
-
-You can periodically run the script using cron.
-
-Place script in `your-home/bin/bing-wallpaper-daily-mac-multimonitor/bing-wallpaper.sh`
-
-In terminal:
+OR
 
 ```sh
-crontab -e
+./bing-wallpaper.sh -r UHD
 ```
-
-or use nano for editing crontab
-
-In terminal:
-
-```sh
-export EDITOR=nano && crontab -e
-```
-
-and paste crontab script:
-
-```
-MAILTO=""
-# min hour mday month wday command
-*/30 * * * * cd ~/bin/bing-wallpaper-daily-mac-multimonitor && ./bing-wallpaper.sh
-```
-
-This will run script every 30 minutes (but download new image only when it change).
