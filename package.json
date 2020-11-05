@@ -1,6 +1,6 @@
 {
   "name": "bing-wallpaper-daily-mac-multimonitor",
-  "version": "1.0.5",
+  "version": "1.0.6",
   "description": "Script for download bing.com daily wallpaper",
   "main": "bing-wallpaper.sh",
   "scripts": {
@@ -25,7 +25,7 @@
     "download"
   ],
   "author": "Lukas Pikora",
-  "license": "ISC",
+  "license": "GNU GENERAL PUBLIC LICENSE",
   "bugs": {
     "url": "https://github.com/lpikora/bing-wallpaper-daily-mac-multimonitor/issues"
   },
