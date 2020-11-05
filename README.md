@@ -11,6 +11,12 @@ First install Node.js https://nodejs.org/en/
 Then in terminal
 
 ```
+npx bing-wallpaper-daily-mac-multimonitor
+```
+
+OR
+
+```
 npm -g install bing-wallpaper-daily-mac-multimonitor
 ```
 
