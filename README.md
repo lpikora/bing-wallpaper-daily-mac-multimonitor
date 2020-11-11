@@ -40,11 +40,13 @@ Run `./bing-wallpaper.sh` terminal for a single download of current Bing image.
 
 ### Using launchd (recommended way)
 
-1. Copy `com.bing-wallpaper-daily-mac-multimonitor.plist` or `com.bing-wallpaper-daily-mac-multimonitor-uhd.plist` (for UHD 4K images) to `~/Library/LaunchAgents/`
+1. Copy `com.bing-wallpaper-daily-mac-multimonitor.plist` to `~/Library/LaunchAgents/`
 
 2. Copy `bing-wallpaper.sh` to `~/bing-wallpaper.sh`
 
-3. Run `launchctl load -w ~/Library/LaunchAgents/com.bing-wallpaper-daily-mac-multimonitor.plist` or `launchctl load -w ~/Library/LaunchAgents/com.bing-wallpaper-daily-mac-multimonitor.plist` in terminal (it can ask for permitions for the first time)
+3. Run `launchctl load -w ~/Library/LaunchAgents/com.bing-wallpaper-daily-mac-multimonitor.plist` in terminal (it can ask for permitions for the first time)
+
+Tip: use `com.bing-wallpaper-daily-mac-multimonitor-uhd.plist`for UHD 4K images
 
 #### How it works?
 
