@@ -3,7 +3,7 @@ PATH=/usr/local/bin:/usr/local/sbin:~/bin:/usr/bin:/bin:/usr/sbin:/sbin
 
 readonly SCRIPT=$(basename "$0")
 readonly VERSION='1.0.0'
-readonly RESOLUTIONS=(1920x1200 UHD)
+readonly RESOLUTIONS=(1920x1200 1920x1080 UHD)
 
 usage() {
 cat <<EOF
@@ -35,9 +35,28 @@ print_message() {
     fi
 }
 
+download_image_curl () {
+    local RES=$1
+    FILEURLWITHRES=$(echo "$FILEURL" | sed -e "s/tmb/$RES/")
+    FILENAME=${FILEURLWITHRES/th\?id=/}
+    FILEWHOLEURL="$PROTO://bing.com/$FILEURLWITHRES"
+
+    if [ $FORCE ] || [ ! -f "$PICTURE_DIR/$FILENAME" ]; then
+        find $PICTURE_DIR -type f -iname \*.jpg -delete
+        print_message "Downloading: $FILENAME..."
+        curl --fail -Lo "$PICTURE_DIR/$FILENAME" "$FILEWHOLEURL"
+    else
+        print_message "Skipping download: $FILENAME..."
+        exit 1
+    fi
+}
+
+set_wallpaper () {
+    osascript -e 'tell application "System Events" to tell every desktop to set picture to "'$PICTURE_DIR/$FILENAME'"'
+}
+
 # Defaults
 PICTURE_DIR="$HOME/Pictures/bing-wallpapers/"
-RESOLUTION="1920x1200"
 
 # Option parsing
 while [[ $# -gt 0 ]]; do
@@ -91,21 +110,23 @@ mkdir -p "${PICTURE_DIR}"
 
 # Parse bing.com and acquire picture URL(s)
 FILEURL=( $(curl -sL https://www.bing.com | \
-    grep -Eo "th\?id=.*?.jpg" | \
-    sed -e "s/tmb/$RESOLUTION/"))
+    grep -Eo "th\?id=.*?.jpg") )
 
-FILENAME=${FILEURL/th\?id=/}
-
-FILEWHOLEURL="$PROTO://bing.com/$FILEURL"
-
-if [ $FORCE ] || [ ! -f "$PICTURE_DIR/$FILENAME" ]; then
-    find $PICTURE_DIR -type f -iname \*.jpg -delete
-    print_message "Downloading: $FILENAME..."
-    curl -Lo "$PICTURE_DIR/$FILENAME" "$FILEWHOLEURL"
-else
-    print_message "Skipping download: $FILENAME..."
+if [ $RESOLUTION ]; then
+echo "download"
+ download_image_curl $RESOLUTION
+ if [ "$?" == "0" ]; then
+     osascript -e 'tell application "System Events" to tell every desktop to set picture to "'$PICTURE_DIR/$FILENAME'"'
+ fi
+ exit 1
 fi
-osascript -e 'tell application "System Events" to tell every desktop to set picture to "'$PICTURE_DIR/$FILENAME'"'
 
+for RESOLUTION in "${RESOLUTIONS[@]}"
+    do
+        download_image_curl $RESOLUTION
 
-
+        if [ "$?" == "0" ]; then
+             osascript -e 'tell application "System Events" to tell every desktop to set picture to "'$PICTURE_DIR/$FILENAME'"'
+            exit 1
+        fi
+    done
