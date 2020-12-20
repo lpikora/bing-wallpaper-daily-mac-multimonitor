@@ -2,8 +2,8 @@
 PATH=/usr/local/bin:/usr/local/sbin:~/bin:/usr/bin:/bin:/usr/sbin:/sbin
 
 readonly SCRIPT=$(basename "$0")
-readonly VERSION='1.0.0'
-readonly RESOLUTIONS=(1920x1200 1920x1080 UHD)
+readonly VERSION='1.1.0'
+RESOLUTIONS=(1920x1200 1920x1080 UHD)
 
 usage() {
 cat <<EOF
@@ -24,6 +24,8 @@ Options:
                                  [default: $HOME/Pictures/bing-wallpapers/]
   -r --resolution <resolution>   The resolution of the image to retrieve.
                                  Supported resolutions: ${RESOLUTIONS[*]}
+  --resolutions <resolutions>    The resolutions of the image try to retrieve.
+                                 eg.: --resolutions "1920x1200 1920x1080 UHD"
   -h --help                      Show this screen.
   --version                      Show version.
 EOF
@@ -45,14 +47,23 @@ download_image_curl () {
         find $PICTURE_DIR -type f -iname \*.jpg -delete
         print_message "Downloading: $FILENAME..."
         curl --fail -Lo "$PICTURE_DIR/$FILENAME" "$FILEWHOLEURL"
+        if [ "$?" == "0" ]; then
+            FILEPATH="$PICTURE_DIR/$FILENAME"
+            return
+        fi
+
+        FILEPATH=""
+        return
     else
         print_message "Skipping download: $FILENAME..."
-        exit 1
+        FILEPATH="$PICTURE_DIR/$FILENAME"
+        return
     fi
 }
 
 set_wallpaper () {
-    osascript -e 'tell application "System Events" to tell every desktop to set picture to "'$PICTURE_DIR/$FILENAME'"'
+    local FILEPATH=$1
+    osascript -e 'tell application "System Events" to tell every desktop to set picture to "'$FILEPATH'"'
 }
 
 # Defaults
@@ -88,6 +99,10 @@ while [[ $# -gt 0 ]]; do
             usage
             exit 0
             ;;
+        --resolutions)
+            RESOLUTIONS="$2"
+            shift
+            ;;
         --version)
             printf "%s\n" $VERSION
             exit 0
@@ -113,20 +128,18 @@ FILEURL=( $(curl -sL https://www.bing.com | \
     grep -Eo "th\?id=.*?.jpg") )
 
 if [ $RESOLUTION ]; then
-echo "download"
- download_image_curl $RESOLUTION
- if [ "$?" == "0" ]; then
-     osascript -e 'tell application "System Events" to tell every desktop to set picture to "'$PICTURE_DIR/$FILENAME'"'
- fi
- exit 1
+    download_image_curl $RESOLUTION
+    if [ "$FILEPATH" ]; then
+        set_wallpaper $FILEPATH
+    fi
+    exit 1
 fi
 
 for RESOLUTION in "${RESOLUTIONS[@]}"
     do
         download_image_curl $RESOLUTION
-
-        if [ "$?" == "0" ]; then
-             osascript -e 'tell application "System Events" to tell every desktop to set picture to "'$PICTURE_DIR/$FILENAME'"'
+        if [ "$FILEPATH" ]; then
+            set_wallpaper $FILEPATH
             exit 1
         fi
     done
