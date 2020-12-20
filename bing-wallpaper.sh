@@ -2,8 +2,8 @@
 PATH=/usr/local/bin:/usr/local/sbin:~/bin:/usr/bin:/bin:/usr/sbin:/sbin
 
 readonly SCRIPT=$(basename "$0")
-readonly VERSION='1.0.0'
-readonly RESOLUTIONS=(1920x1200 UHD)
+readonly VERSION='1.1.0'
+RESOLUTIONS=(1920x1200 1920x1080 UHD)
 
 usage() {
 cat <<EOF
@@ -24,6 +24,8 @@ Options:
                                  [default: $HOME/Pictures/bing-wallpapers/]
   -r --resolution <resolution>   The resolution of the image to retrieve.
                                  Supported resolutions: ${RESOLUTIONS[*]}
+  --resolutions <resolutions>    The resolutions of the image try to retrieve.
+                                 eg.: --resolutions "1920x1200 1920x1080 UHD"
   -h --help                      Show this screen.
   --version                      Show version.
 EOF
@@ -35,9 +37,37 @@ print_message() {
     fi
 }
 
+download_image_curl () {
+    local RES=$1
+    FILEURLWITHRES=$(echo "$FILEURL" | sed -e "s/tmb/$RES/")
+    FILENAME=${FILEURLWITHRES/th\?id=/}
+    FILEWHOLEURL="$PROTO://bing.com/$FILEURLWITHRES"
+
+    if [ $FORCE ] || [ ! -f "$PICTURE_DIR/$FILENAME" ]; then
+        find $PICTURE_DIR -type f -iname \*.jpg -delete
+        print_message "Downloading: $FILENAME..."
+        curl --fail -Lo "$PICTURE_DIR/$FILENAME" "$FILEWHOLEURL"
+        if [ "$?" == "0" ]; then
+            FILEPATH="$PICTURE_DIR/$FILENAME"
+            return
+        fi
+
+        FILEPATH=""
+        return
+    else
+        print_message "Skipping download: $FILENAME..."
+        FILEPATH="$PICTURE_DIR/$FILENAME"
+        return
+    fi
+}
+
+set_wallpaper () {
+    local FILEPATH=$1
+    osascript -e 'tell application "System Events" to tell every desktop to set picture to "'$FILEPATH'"'
+}
+
 # Defaults
 PICTURE_DIR="$HOME/Pictures/bing-wallpapers/"
-RESOLUTION="1920x1200"
 
 # Option parsing
 while [[ $# -gt 0 ]]; do
@@ -69,6 +99,10 @@ while [[ $# -gt 0 ]]; do
             usage
             exit 0
             ;;
+        --resolutions)
+            RESOLUTIONS="$2"
+            shift
+            ;;
         --version)
             printf "%s\n" $VERSION
             exit 0
@@ -91,21 +125,21 @@ mkdir -p "${PICTURE_DIR}"
 
 # Parse bing.com and acquire picture URL(s)
 FILEURL=( $(curl -sL https://www.bing.com | \
-    grep -Eo "th\?id=.*?.jpg" | \
-    sed -e "s/tmb/$RESOLUTION/"))
+    grep -Eo "th\?id=.*?.jpg") )
 
-FILENAME=${FILEURL/th\?id=/}
-
-FILEWHOLEURL="$PROTO://bing.com/$FILEURL"
-
-if [ $FORCE ] || [ ! -f "$PICTURE_DIR/$FILENAME" ]; then
-    find $PICTURE_DIR -type f -iname \*.jpg -delete
-    print_message "Downloading: $FILENAME..."
-    curl -Lo "$PICTURE_DIR/$FILENAME" "$FILEWHOLEURL"
-else
-    print_message "Skipping download: $FILENAME..."
+if [ $RESOLUTION ]; then
+    download_image_curl $RESOLUTION
+    if [ "$FILEPATH" ]; then
+        set_wallpaper $FILEPATH
+    fi
+    exit 1
 fi
-osascript -e 'tell application "System Events" to tell every desktop to set picture to "'$PICTURE_DIR/$FILENAME'"'
 
-
-
+for RESOLUTION in "${RESOLUTIONS[@]}"
+    do
+        download_image_curl $RESOLUTION
+        if [ "$FILEPATH" ]; then
+            set_wallpaper $FILEPATH
+            exit 1
+        fi
+    done
