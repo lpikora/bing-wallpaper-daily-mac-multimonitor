@@ -1,4 +1,4 @@
-# Bash Script for download and set current Bing Daily Wallpaper automatically on all monitors for macOS
+# Bash Script for download and set current Bing Daily Wallpaper automatically on all (or selected) monitors for macOS
 
 ![alt text](https://raw.githubusercontent.com/lpikora/bing-wallpaper-daily-mac-multimonitor/images/example-bing-animation.gif)
 
@@ -17,6 +17,7 @@ Script downloads current Bing Daily Wallpaper to `~/Pictures/bing-wallpapers/` a
 3. Run `launchctl load -w ~/Library/LaunchAgents/com.bing-wallpaper-daily-mac-multimonitor.plist` in terminal (it can ask for permitions for the first time)
 
 Tip: use `com.bing-wallpaper-daily-mac-multimonitor-uhd.plist`for UHD 4K images
+Tip: provide parameter `-m <monitor number>` to `bing-wallpaper.sh` in appropriate .plist file to set wallpaper only on certain monitor
 
 #### How it works?
 
