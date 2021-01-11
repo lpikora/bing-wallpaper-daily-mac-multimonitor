@@ -4,6 +4,7 @@ PATH=/usr/local/bin:/usr/local/sbin:~/bin:/usr/bin:/bin:/usr/sbin:/sbin
 readonly SCRIPT=$(basename "$0")
 readonly VERSION='1.1.0'
 RESOLUTIONS=(1920x1200 1920x1080 UHD)
+MONITOR="0" # 0 means all monitors
 
 usage() {
 cat <<EOF
@@ -26,6 +27,7 @@ Options:
                                  Supported resolutions: ${RESOLUTIONS[*]}
   --resolutions <resolutions>    The resolutions of the image try to retrieve.
                                  eg.: --resolutions "1920x1200 1920x1080 UHD"
+  -m --monitor <num>             Set wallpaper only on certain monitor (1,2,3...)                                                       
   -h --help                      Show this screen.
   --version                      Show version.
 EOF
@@ -63,7 +65,20 @@ download_image_curl () {
 
 set_wallpaper () {
     local FILEPATH=$1
-    osascript -e 'tell application "System Events" to tell every desktop to set picture to "'$FILEPATH'"'
+    local MONITOR=$2
+
+    if [ "$MONITOR" -ge 1 ] 2>/dev/null; then
+    print_message "Setting wallpaper for monitor: $MONITOR"
+    osascript - << EOF
+        set tlst to {}
+        tell application "System Events"
+            set tlst to a reference to every desktop
+            set picture of item $MONITOR of tlst to "$FILEPATH"
+        end tell
+EOF
+    else
+        osascript -e 'tell application "System Events" to tell every desktop to set picture to "'$FILEPATH'"'
+    fi
 }
 
 # Defaults
@@ -84,6 +99,10 @@ while [[ $# -gt 0 ]]; do
             ;;
         -n|--filename)
             FILENAME="$2"
+            shift
+            ;;
+        -m|--monitor)
+            MONITOR="$2"
             shift
             ;;
         -f|--force)
@@ -130,7 +149,7 @@ FILEURL=( $(curl -sL https://www.bing.com | \
 if [ $RESOLUTION ]; then
     download_image_curl $RESOLUTION
     if [ "$FILEPATH" ]; then
-        set_wallpaper $FILEPATH
+        set_wallpaper $FILEPATH $MONITOR
     fi
     exit 1
 fi
@@ -139,7 +158,7 @@ for RESOLUTION in "${RESOLUTIONS[@]}"
     do
         download_image_curl $RESOLUTION
         if [ "$FILEPATH" ]; then
-            set_wallpaper $FILEPATH
+            set_wallpaper $FILEPATH $MONITOR
             exit 1
         fi
     done
