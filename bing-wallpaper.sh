@@ -2,7 +2,7 @@
 PATH=/usr/local/bin:/usr/local/sbin:~/bin:/usr/bin:/bin:/usr/sbin:/sbin
 
 readonly SCRIPT=$(basename "$0")
-readonly VERSION='1.1.0'
+readonly VERSION='1.1.1'
 RESOLUTIONS=(1920x1200 1920x1080 UHD)
 MONITOR="0" # 0 means all monitors
 
@@ -35,7 +35,7 @@ EOF
 
 print_message() {
     if [ ! "$QUIET" ]; then
-        printf "%s\n" "${1}"
+        printf "%s\n" "$(date): ${1}"
     fi
 }
 
