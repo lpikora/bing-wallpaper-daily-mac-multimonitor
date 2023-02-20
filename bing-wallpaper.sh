@@ -3,7 +3,7 @@ PATH=/usr/local/bin:/usr/local/sbin:~/bin:/usr/bin:/bin:/usr/sbin:/sbin
 
 readonly SCRIPT=$(basename "$0")
 readonly VERSION='1.1.1'
-RESOLUTIONS=(1920x1200 1920x1080 UHD)
+RESOLUTIONS=(1920x1080 1920x1200 1024x768 1280x720 1366x768 UHD)
 MONITOR="0" # 0 means all monitors
 
 usage() {
@@ -47,7 +47,8 @@ print_message() {
 
 download_image_curl () {
     local RES=$1
-    FILEURLWITHRES=$(echo "$FILEURL" | sed -e "s/tmb/$RES/")
+    FILEURLWITHRES="${FILEURL}_${RES}.jpg"
+    echo $FILEURLWITHRES
     FILENAME=${FILEURLWITHRES/th\?id=/}
     FILEWHOLEURL="$PROTO://bing.com/$FILEURLWITHRES"
 
@@ -159,9 +160,11 @@ BING_HP_IMAGE_ARCHIVE_URL="https://www.bing.com/HPImageArchive.aspx?format=xml&i
 # Create picture directory if it doesn't already exist
 mkdir -p "${PICTURE_DIR}"
 
-# Parse bing.com and acquire picture URL(s)
+# Parse HPImageArchive API and acquire picture BASE URL
 FILEURL=( $(curl -sL $BING_HP_IMAGE_ARCHIVE_URL | \
-    grep -Eo "th\?id=.*?.jpg") )
+    grep -Eo "<urlBase>.*?</urlBase>") )
+FILEURL=$(echo "$FILEURL" | sed -e "s/<urlBase>//")
+FILEURL=$(echo "$FILEURL" | sed -e "s/<\/urlBase>//")
 
 if [ $RESOLUTION ]; then
     download_image_curl $RESOLUTION
