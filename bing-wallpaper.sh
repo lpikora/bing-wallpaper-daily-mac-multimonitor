@@ -18,6 +18,12 @@ Options:
                                  the picture if the filename already exists.
   -s --ssl                       Communicate with bing.com over SSL.
   -q --quiet                     Do not display log messages.
+  -c --country <coutry-tag>      Specify market country/region eg. en-US, cs-CZ
+                                 Pictures may be different for markets on some days.
+                                 See full list of countries on https://learn.microsoft.com/en-us/previous-versions/bing/search/dd251064(v=msdn.10)
+  -d --day <number>              Day for which you want to get the picture.
+                                 0 is current day, 1 is yesterday etc.
+                                 Default is 0.
   -n --filename <file name>      The name of the downloaded picture. Defaults to
                                  the upstream name.
   -p --picturedir <picture dir>  The full path to the picture download dir.
@@ -97,6 +103,14 @@ while [[ $# -gt 0 ]]; do
             PICTURE_DIR="$2"
             shift
             ;;
+        -c|--country)
+            COUNTRY="$2"
+            shift
+            ;;
+        -d|--day)
+            DAY="$2"
+            shift
+            ;;
         -n|--filename)
             FILENAME="$2"
             shift
@@ -138,12 +152,15 @@ done
 # Set options
 [ $QUIET ] && CURL_QUIET='-s'
 [ $SSL ]   && PROTO='https'   || PROTO='http'
+[ $DAY ]   && IDX=$DAY   || IDX='0'
+BING_HP_IMAGE_ARCHIVE_URL="https://www.bing.com/HPImageArchive.aspx?format=xml&idx=${IDX}&n=1"
+[ $COUNTRY ]   && BING_HP_IMAGE_ARCHIVE_URL="${BING_HP_IMAGE_ARCHIVE_URL}&mkt=${COUNTRY}"
 
 # Create picture directory if it doesn't already exist
 mkdir -p "${PICTURE_DIR}"
 
 # Parse bing.com and acquire picture URL(s)
-FILEURL=( $(curl -sL https://www.bing.com | \
+FILEURL=( $(curl -sL $BING_HP_IMAGE_ARCHIVE_URL | \
     grep -Eo "th\?id=.*?.jpg") )
 
 if [ $RESOLUTION ]; then
