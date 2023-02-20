@@ -2,7 +2,7 @@
 PATH=/usr/local/bin:/usr/local/sbin:~/bin:/usr/bin:/bin:/usr/sbin:/sbin
 
 readonly SCRIPT=$(basename "$0")
-readonly VERSION='1.1.1'
+readonly VERSION='1.2.1'
 RESOLUTIONS=(1920x1080 1920x1200 1024x768 1280x720 1366x768 UHD)
 MONITOR="0" # 0 means all monitors
 
