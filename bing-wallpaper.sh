@@ -33,7 +33,12 @@ Options:
                                  Supported resolutions: ${RESOLUTIONS[*]}
   --resolutions <resolutions>    The resolutions of the image try to retrieve.
                                  eg.: --resolutions "1920x1200 1920x1080 UHD"
-  -m --monitor <num>             Set wallpaper only on certain monitor (1,2,3...)                                                       
+  -m --monitor <num>             Set wallpaper only on certain monitor (1,2,3...)
+  --all-desktops-experimental    Set wallpaper on all desktops
+                                 Fixing osascript bug when wallpaper is not set for Desktop 2.
+                                 Known issue: Minimized apps are removed from Dock.
+                                 If something goes wrong delete Library/Application Support/Dock/desktoppicture.db
+                                 and restart your Mac.                           
   -h --help                      Show this screen.
   --version                      Show version.
 EOF
@@ -88,6 +93,42 @@ EOF
     fi
 }
 
+set_wallpaper_experimental () {
+ local db_file="Library/Application Support/Dock/desktoppicture.db"
+    local db_path="$HOME/$db_file"
+
+    # Put the image path in the database
+    local sql="insert into data values(\"$FILEPATH\"); "
+    sqlite3 "$db_path" "$sql"
+
+    # Get the index of the new entry
+    local sql="select max(rowid) from data;"
+    local new_entry=$(sqlite3 "$db_path" "$sql")
+    local new_entry=$(echo $new_entry|tr -d '\n')
+
+    # Get all picture ids (monitor/space pairs)
+    local sql="select rowid from pictures;"
+    local pictures_string=$(sqlite3 "$db_path" "$sql")
+
+    local IFS=$'\n'
+    local pictures=($pictures_string)
+
+    # Clear all existing preferences
+    local sql="select max(rowid) from data; delete from preferences; "
+
+    for pic in "${pictures[@]}"
+    do
+        if [ "$pic" ]; then
+            local sql+="insert into preferences (key, data_id, picture_id) "
+            local sql+="values(1, $new_entry, $pic); "
+        fi
+    done
+
+    sqlite3 "$db_path" "$sql"
+
+    killall "Dock"
+}
+
 # Defaults
 PICTURE_DIR="$HOME/Pictures/bing-wallpapers/"
 
@@ -137,6 +178,10 @@ while [[ $# -gt 0 ]]; do
             RESOLUTIONS="$2"
             shift
             ;;
+        --all-desktops-experimental)
+            EXPERIMENTAL=true
+            shift
+            ;;
         --version)
             printf "%s\n" $VERSION
             exit 0
@@ -169,7 +214,11 @@ FILEURL=$(echo "$FILEURL" | sed -e "s/<\/urlBase>//")
 if [ $RESOLUTION ]; then
     download_image_curl $RESOLUTION
     if [ "$FILEPATH" ]; then
-        set_wallpaper $FILEPATH $MONITOR
+        if [ "$EXPERIMENTAL" ]; then
+            set_wallpaper_experimental $FILEPATH
+        else
+            set_wallpaper $FILEPATH $MONITOR
+        fi
     fi
     exit 1
 fi
@@ -178,7 +227,11 @@ for RESOLUTION in "${RESOLUTIONS[@]}"
     do
         download_image_curl $RESOLUTION
         if [ "$FILEPATH" ]; then
-            set_wallpaper $FILEPATH $MONITOR
+             if [ "$EXPERIMENTAL" ]; then
+                set_wallpaper_experimental $FILEPATH
+            else
+                set_wallpaper $FILEPATH $MONITOR
+            fi
             exit 1
         fi
     done
