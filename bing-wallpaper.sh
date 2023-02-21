@@ -71,6 +71,7 @@ download_image_curl () {
     else
         print_message "Skipping download: $FILENAME..."
         FILEPATH="$PICTURE_DIR/$FILENAME"
+        DOWNLOAD_SKIPPED=true
         return
     fi
 }
@@ -94,7 +95,7 @@ EOF
 }
 
 set_wallpaper_experimental () {
- local db_file="Library/Application Support/Dock/desktoppicture.db"
+    local db_file="Library/Application Support/Dock/desktoppicture.db"
     local db_path="$HOME/$db_file"
 
     # Put the image path in the database
@@ -215,7 +216,9 @@ if [ $RESOLUTION ]; then
     download_image_curl $RESOLUTION
     if [ "$FILEPATH" ]; then
         if [ "$EXPERIMENTAL" ]; then
-            set_wallpaper_experimental $FILEPATH
+            if [ ! "$DOWNLOAD_SKIPPED" ]; then
+                set_wallpaper_experimental $FILEPATH
+            fi
         else
             set_wallpaper $FILEPATH $MONITOR
         fi
@@ -227,8 +230,10 @@ for RESOLUTION in "${RESOLUTIONS[@]}"
     do
         download_image_curl $RESOLUTION
         if [ "$FILEPATH" ]; then
-             if [ "$EXPERIMENTAL" ]; then
-                set_wallpaper_experimental $FILEPATH
+            if [ "$EXPERIMENTAL" ]; then
+                if [ ! "$DOWNLOAD_SKIPPED" ]; then
+                    set_wallpaper_experimental $
+                fi
             else
                 set_wallpaper $FILEPATH $MONITOR
             fi
