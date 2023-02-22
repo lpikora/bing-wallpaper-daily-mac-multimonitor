@@ -5,6 +5,9 @@ readonly SCRIPT=$(basename "$0")
 readonly VERSION='1.1.1'
 RESOLUTIONS=(1920x1200 1920x1080 1024x768 1280x720 1366x768 UHD)
 MONITOR="0" # 0 means all monitors
+PLIST_FILE="$HOME/Library/LaunchAgents/com.bing-wallpaper-daily-mac-multimonitor"
+AUTO_UPDATE_NAME="default"
+ARGS=$@
 
 usage() {
 cat <<EOF
@@ -14,6 +17,13 @@ Usage:
   $SCRIPT --version
 
 Options:
+  enable-auto-update             Enable automatic update of wallpapers every day
+                                 the picture if the filename already exists.
+  disable-auto-update            Disable automatic update of wallpapers every day
+                                 the picture if the filename already exists.
+  --auto-update-name <name>      Name of your auto update when enabling/disabling
+                                 Using custom name enables setting multiple automatic update configurations.
+                                 Eg. Set on monitor 1 todays wallpaper and on monitor 2 wallpaper from yesterday                                                           
   -f --force                     Force download of picture. This will overwrite
                                  the picture if the filename already exists.
   -s --ssl                       Communicate with bing.com over SSL.
@@ -44,6 +54,42 @@ Options:
 EOF
 }
 
+create_plist_in_users_agents_folder() {
+    local SCRIPT_PATH=$( cd -- "$( dirname -- "${BASH_SOURCE[0]}" )" &> /dev/null && pwd )/$(basename "${BASH_SOURCE:-$0}")
+    local REST_ARGS=$(echo "$ARGS" | sed -e "s/enable-auto-update//")
+
+    cat > $PLIST_FILE <<- EOM
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple Computer//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<dict>
+    <key>Label</key>
+    <string>com.bing-wallpaper-daily-mac-multimonitor.plist</string>
+    <key>OnDemand</key>
+    <true/>
+    <key>ProgramArguments</key>
+    <array>
+        <string>/bin/sh</string>
+		<string>-c</string>
+        <string>$SCRIPT_PATH$REST_ARGS</string>
+    </array>
+    <key>StartInterval</key>
+    <integer>1800</integer>
+	<key>RunAtLoad</key>
+	<true/>
+</dict>
+</plist>
+EOM
+
+launchctl unload -w $PLIST_FILE 2>/dev/null
+launchctl load -w $PLIST_FILE 
+}
+
+remove_plist_in_users_agents_folder() {
+    launchctl unload -w "$PLIST_FILE" 2>/dev/null
+    rm "$PLIST_FILE"
+}
+
 print_message() {
     if [ ! "$QUIET" ]; then
         printf "%s\n" "$(date): ${1}"
@@ -54,23 +100,24 @@ download_image_curl () {
     local RES=$1
     FILEURLWITHRES="${FILEURL}_${RES}.jpg"
     echo $FILEURLWITHRES
-    FILENAME=${FILEURLWITHRES/th\?id=/}
+    FILENAME=${FILEURLWITHRES/\/th\?id=/}
+    FILENAME_LOCAL="${AUTO_UPDATE_NAME}-${FILENAME}"
     FILEWHOLEURL="$PROTO://bing.com/$FILEURLWITHRES"
 
-    if [ $FORCE ] || [ ! -f "$PICTURE_DIR/$FILENAME" ]; then
-        find $PICTURE_DIR -type f -iname \*.jpg -delete
+    if [ $FORCE ] || [ ! -f "$PICTURE_DIR/$FILENAME_LOCAL" ]; then
+        find $PICTURE_DIR -type f -iname $AUTO_UPDATE_NAME-\*.jpg -delete
         print_message "Downloading: $FILENAME..."
-        curl --fail -Lo "$PICTURE_DIR/$FILENAME" "$FILEWHOLEURL"
+        curl --fail -Lo "$PICTURE_DIR/$FILENAME_LOCAL" "$FILEWHOLEURL"
         if [ "$?" == "0" ]; then
-            FILEPATH="$PICTURE_DIR/$FILENAME"
+            FILEPATH="$PICTURE_DIR/$FILENAME_LOCAL"
             return
         fi
 
         FILEPATH=""
         return
     else
-        print_message "Skipping download: $FILENAME..."
-        FILEPATH="$PICTURE_DIR/$FILENAME"
+        print_message "Skipping download: $FILENAME_LOCAL..."
+        FILEPATH="$PICTURE_DIR/$FILENAME_LOCAL"
         DOWNLOAD_SKIPPED=true
         return
     fi
@@ -138,6 +185,16 @@ while [[ $# -gt 0 ]]; do
     key="$1"
 
     case $key in
+        enable-auto-update)
+            ENABLE_AUTOMATIC_UPDATE=true
+            ;;
+        disable-auto-update)
+            DISABLE_AUTOMATIC_UPDATE=true
+            ;;
+        --auto-update-name)
+            AUTO_UPDATE_NAME="$2"
+            shift
+            ;;
         -r|--resolution)
             RESOLUTION="$2"
             shift
@@ -181,7 +238,6 @@ while [[ $# -gt 0 ]]; do
             ;;
         --all-desktops-experimental)
             EXPERIMENTAL=true
-            shift
             ;;
         --version)
             printf "%s\n" $VERSION
@@ -202,6 +258,22 @@ done
 [ $DAY ]   && IDX=$DAY   || IDX='0'
 BING_HP_IMAGE_ARCHIVE_URL="https://www.bing.com/HPImageArchive.aspx?format=xml&idx=${IDX}&n=1"
 [ $COUNTRY ]   && BING_HP_IMAGE_ARCHIVE_URL="${BING_HP_IMAGE_ARCHIVE_URL}&mkt=${COUNTRY}"
+PLIST_FILE="${PLIST_FILE}-${AUTO_UPDATE_NAME}.plist"
+
+
+if [ "$ENABLE_AUTOMATIC_UPDATE" ]; then
+# enable update
+create_plist_in_users_agents_folder
+echo "Automatic wallpaper update enabled"
+exit 1
+fi
+
+if [ "$DISABLE_AUTOMATIC_UPDATE" ]; then
+# disable update
+remove_plist_in_users_agents_folder
+echo "Automatic wallpaper update disabled"
+exit 1
+fi
 
 # Create picture directory if it doesn't already exist
 mkdir -p "${PICTURE_DIR}"
