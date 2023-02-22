@@ -71,7 +71,7 @@ create_plist_in_users_agents_folder() {
     <array>
         <string>/bin/sh</string>
 		<string>-c</string>
-        <string>$SCRIPT_PATH$REST_ARGS</string>
+        <string>$SCRIPT_PATH $REST_ARGS</string>
     </array>
     <key>StartInterval</key>
     <integer>1800</integer>

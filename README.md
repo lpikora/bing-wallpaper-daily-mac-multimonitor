@@ -8,22 +8,66 @@ Script downloads current Bing Daily Wallpaper to `~/Pictures/bing-wallpapers/` a
 
 ## Set wallpaper (dekstop picture) automatically every day
 
-### Using launchd (recommended way)
+1. copy `bing-wallpaper.sh` to your computer eg. your to `~/Desktop` folder
+2. open Terminal app
+3. run `cd ~/Desktop`
+4. run `chmod +x bing-wallpaper.sh` 
+5. run `./bing-wallpaper.sh enable-auto-update`
 
-1. Copy `com.bing-wallpaper-daily-mac-multimonitor.plist` to `~/Library/LaunchAgents/`
+**Note:** do not remove `bing-wallpaper.sh` file from your computer. It is needed to download and set wallpaper every day
 
-2. Copy `bing-wallpaper.sh` to `~/bing-wallpaper.sh`
+**Tips:**
+- provide parameter `-d <number>` to set wallpaper from different day eg. 1 for yesterday
+- provide parameter `-c <country-code>` to get country specific Bing picture of the day. Use code like `en-US`, `cs-CZ`.
+- provide parameter `-m <monitor number>` to set wallpaper only on certain monitor
+- provide `--auto-update-name <name>` to have multiple auto update scripts running
 
-3. Run `launchctl load -w ~/Library/LaunchAgents/com.bing-wallpaper-daily-mac-multimonitor.plist` in terminal (it can ask for permitions for the first time)
+See all parameters providing parameter `--help`
 
-Tip: use `com.bing-wallpaper-daily-mac-multimonitor-uhd.plist`for UHD 4K images
-Tip: provide parameter `-m <monitor number>` to `bing-wallpaper.sh` in appropriate .plist file to set wallpaper only on certain monitor
+## Script Parameters
+
+
+```
+  enable-auto-update             Enable automatic update of wallpapers every day
+                                 the picture if the filename already exists.
+  disable-auto-update            Disable automatic update of wallpapers every day
+                                 the picture if the filename already exists.
+  --auto-update-name <name>      Name of your auto update when enabling/disabling
+                                 Using custom name enables setting multiple automatic update configurations.
+                                 Eg. Set on monitor 1 todays wallpaper and on monitor 2 wallpaper from yesterday                                                           
+  -f --force                     Force download of picture. This will overwrite
+                                 the picture if the filename already exists.
+  -s --ssl                       Communicate with bing.com over SSL.
+  -q --quiet                     Do not display log messages.
+  -c --country <coutry-code>     Specify market country/region eg. en-US, cs-CZ
+                                 Pictures may be different for markets on some days.
+                                 See full list of countries on https://learn.microsoft.com/en-us/previous-versions/bing/search/dd251064(v=msdn.10)
+  -d --day <number>              Day for which you want to get the picture.
+                                 0 is current day, 1 is yesterday etc.
+                                 Default is 0.
+  -n --filename <file name>      The name of the downloaded picture. Defaults to
+                                 the upstream name.
+  -p --picturedir <picture dir>  The full path to the picture download dir.
+                                 Will be created if it does not exist.
+                                 [default: $HOME/Pictures/bing-wallpapers/]
+  -r --resolution <resolution>   The resolution of the image to retrieve.
+                                 Supported resolutions: ${RESOLUTIONS[*]}
+  --resolutions <resolutions>    The resolutions of the image try to retrieve.
+                                 eg.: --resolutions "1920x1200 1920x1080 UHD"
+  -m --monitor <num>             Set wallpaper only on certain monitor (1,2,3...)
+  --all-desktops-experimental    Set wallpaper on all desktops
+                                 Fixing osascript bug when wallpaper is not set for Desktop 2.
+                                 Known issue: Minimized apps are removed from Dock.
+                                 If something goes wrong delete Library/Application Support/Dock/desktoppicture.db
+                                 and restart your Mac.                           
+  -h --help                      Show this screen.
+  --version                      Show version.
+```
+
 
 #### How it works?
 
-Script `bing-wallpaper.sh` is run every 30 minutes and checks if there is a new image on Bing.com. New image is downloaded and set as desktop picture on your all monitors.
-
-Optionally you can edit `com.bing-wallpaper-daily-mac-multimonitor.plist` file to run script in different interval or schedule runs on specific time of day. (run `launchctl unload -w ~/Library/LaunchAgents/com.bing-wallpaper-daily-mac-multimonitor.plist` edit plist file and again load it)
+Command `./bing-wallpaper.sh enable-auto-update` creates a launch agent (plist file in `~/Library/LaunchAgents/`). Agent will run script `bing-wallpaper.sh` every day and automatically update your wallpapers to latest Bing picture of the day.
 
 For More info about launchd see https://www.launchd.info/ Configuration section.
 
@@ -58,40 +102,3 @@ bing-wallpaper-daily-mac-multimonitor
 ### without npm
 
 Run `./bing-wallpaper.sh` terminal for a single download of current Bing image.
-
-## Download wallpaper in UHD resolution
-
-Add `-r UHD` parameter after `bing-wallpaper-daily-mac-multimonitor` or `./bing-wallpaper.sh` command:
-
-```sh
-bing-wallpaper-daily-mac-multimonitor -r UHD
-```
-
-OR
-
-```sh
-./bing-wallpaper.sh -r UHD
-```
-
-### Daily download of wallpaper using cron
-
-You need to edit crontab in order to run script periodically.
-
-In terminal
-
-```sh
-export EDITOR=nano && crontab -e
-```
-
-copy and paste crontab script:
-
-```
-MAILTO=""
-# min hour mday month wday command
-*/30 * * * * bing-wallpaper-daily-mac-multimonitor
-```
-
-Press `control + x` then `y` and `enter`
-
-This will run script every 30 minutes (but download new image only when it change).
-
