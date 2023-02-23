@@ -1,6 +1,6 @@
 {
   "name": "bing-wallpaper-daily-mac-multimonitor",
-  "version": "1.3.4",
+  "version": "1.3.5",
   "description": "Script for download bing.com daily wallpaper",
   "main": "bing-wallpaper.sh",
   "scripts": {
