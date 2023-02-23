@@ -4,7 +4,7 @@
   "description": "Script for download bing.com daily wallpaper",
   "main": "bing-wallpaper.sh",
   "scripts": {
-    "start": "./bing-wallpaper.sh",
+    "start": "./bing-wallpaper.sh --run-using-npx",
     "test": "echo \"Error: no test specified\" && exit 1",
     "release:patch": "npm version patch",
     "release:minor": "npm version minor",

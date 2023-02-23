@@ -48,7 +48,8 @@ Options:
                                  Fixing osascript bug when wallpaper is not set for Desktop 2.
                                  Known issue: Minimized apps are removed from Dock.
                                  If something goes wrong delete Library/Application Support/Dock/desktoppicture.db
-                                 and restart your Mac.                           
+                                 and restart your Mac.   
+  --run-using-npx                Script is run using npx command                      
   -h --help                      Show this screen.
   --version                      Show version.
 EOF
@@ -57,6 +58,12 @@ EOF
 create_plist_in_users_agents_folder() {
     local SCRIPT_PATH=$( cd -- "$( dirname -- "${BASH_SOURCE[0]}" )" &> /dev/null && pwd )/$(basename "${BASH_SOURCE:-$0}")
     local REST_ARGS=$(echo "$ARGS" | sed -e "s/enable-auto-update//")
+    
+    if [ $RUN_USING_NPX ]; then
+        local COMMANDS="<string>source ~/.bashrc && npx bing-wallpaper-daily-mac-multimonitor $REST_ARGS</string>"
+    else
+        local COMMANDS="<string>$SCRIPT_PATH $REST_ARGS</string>"
+    fi
 
     cat > $PLIST_FILE <<- EOM
 <?xml version="1.0" encoding="UTF-8"?>
@@ -71,8 +78,17 @@ create_plist_in_users_agents_folder() {
     <array>
         <string>/bin/sh</string>
 		<string>-c</string>
-        <string>$SCRIPT_PATH $REST_ARGS</string>
+        $COMMANDS
     </array>
+    <key>EnvironmentVariables</key>
+    <dict>
+        <key>PATH</key>
+        <string>/usr/local/bin:/usr/local/sbin:/usr/bin:/bin:/usr/sbin:/sbin</string>
+    </dict>
+     <key>StandardErrorPath</key>
+    <string>/tmp/bing-wallpaper-daily-mac-multimonitor-plist.err</string>
+    <key>StandardOutPath</key>
+    <string>/tmp/bing-wallpaper-daily-mac-multimonitor-plist.out</string>
     <key>StartInterval</key>
     <integer>1800</integer>
 	<key>RunAtLoad</key>
@@ -221,6 +237,9 @@ while [[ $# -gt 0 ]]; do
             ;;
         -f|--force)
             FORCE=true
+            ;;
+        --run-using-npx)
+            RUN_USING_NPX=true
             ;;
         -s|--ssl)
             SSL=true
