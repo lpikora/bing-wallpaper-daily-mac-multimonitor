@@ -48,8 +48,7 @@ Options:
                                  Fixing osascript bug when wallpaper is not set for Desktop 2.
                                  Known issue: Minimized apps are removed from Dock.
                                  If something goes wrong delete Library/Application Support/Dock/desktoppicture.db
-                                 and restart your Mac.   
-  --run-using-npx                Script is run using npx command                      
+                                 and restart your Mac.                    
   -h --help                      Show this screen.
   --version                      Show version.
 EOF
@@ -60,7 +59,7 @@ create_plist_in_users_agents_folder() {
     local REST_ARGS=$(echo "$ARGS" | sed -e "s/enable-auto-update//")
     
     if [ $RUN_USING_NPX ]; then
-        local COMMANDS="<string>source ~/.bashrc && npx bing-wallpaper-daily-mac-multimonitor $REST_ARGS</string>"
+        local COMMANDS="<string>source ~/.bashrc && npx --yes bing-wallpaper-daily-mac-multimonitor@latest $REST_ARGS</string>"
     else
         local COMMANDS="<string>$SCRIPT_PATH $REST_ARGS</string>"
     fi
@@ -238,9 +237,6 @@ while [[ $# -gt 0 ]]; do
         -f|--force)
             FORCE=true
             ;;
-        --run-using-npx)
-            RUN_USING_NPX=true
-            ;;
         -s|--ssl)
             SSL=true
             ;;
@@ -279,6 +275,10 @@ BING_HP_IMAGE_ARCHIVE_URL="https://www.bing.com/HPImageArchive.aspx?format=xml&i
 [ $COUNTRY ]   && BING_HP_IMAGE_ARCHIVE_URL="${BING_HP_IMAGE_ARCHIVE_URL}&mkt=${COUNTRY}"
 PLIST_FILE="${PLIST_FILE}-${AUTO_UPDATE_NAME}.plist"
 
+PARENT_COMMAND=$(ps -o comm= $PPID)
+if [[ "$PARENT_COMMAND" == *"npm exec"* ]]; then
+  RUN_USING_NPX=true
+fi
 
 if [ "$ENABLE_AUTOMATIC_UPDATE" ]; then
 # enable update
