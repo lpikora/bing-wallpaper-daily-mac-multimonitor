@@ -4,7 +4,7 @@
   "description": "Script for download bing.com daily wallpaper",
   "main": "bing-wallpaper.sh",
   "scripts": {
-    "start": "./bing-wallpaper.sh --run-using-npx",
+    "start": "./bing-wallpaper-npx-wrapper.sh",
     "test": "echo \"Error: no test specified\" && exit 1",
     "release:patch": "npm version patch",
     "release:minor": "npm version minor",
@@ -31,6 +31,6 @@
   },
   "homepage": "https://github.com/lpikora/bing-wallpaper-daily-mac-multimonitor#readme",
   "bin": {
-    "bing-wallpaper-daily-mac-multimonitor": "./bing-wallpaper.sh --run-using-npx"
+    "bing-wallpaper-daily-mac-multimonitor": "./bing-wallpaper-npx-wrapper.sh"
   }
 }
