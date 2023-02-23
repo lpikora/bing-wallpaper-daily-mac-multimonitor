@@ -4,9 +4,16 @@
 
 ## How it works?
 
-Script downloads current Bing Daily Wallpaper to `~/Pictures/bing-wallpapers/` and sets it as wallpaper on all your monitors.
+Script downloads current Bing Daily Wallpaper to `~/Pictures/bing-wallpapers/` and sets it as wallpaper on all your monitors every day.
 
 ## Set wallpaper (dekstop picture) automatically every day
+
+### using `npx`
+
+1. First install Node.js https://nodejs.org/en/
+2. Run in Terminal `npx --yes bing-wallpaper-daily-mac-multimonitor@latest enable-auto-update`
+
+### using `bing-wallpaper.sh`
 
 1. copy `bing-wallpaper.sh` to your computer eg. your to `~/Desktop` folder
 2. open Terminal app
