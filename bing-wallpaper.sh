@@ -3,9 +3,8 @@ PATH=/usr/local/bin:/usr/local/sbin:~/bin:/usr/bin:/bin:/usr/sbin:/sbin
 
 # Defaults
 SCRIPT=$(basename "$0")
-VERSION='1.3.5'
-readonly $SCRIPT
-readonly $VERSION
+readonly SCRIPT
+readonly VERSION='1.3.5'
 PICTURE_DIR="$HOME/Pictures/bing-wallpapers/"
 RESOLUTIONS=(1920x1200 1920x1080 1024x768 1280x720 1366x768 UHD)
 MONITOR="0" # 0 means all monitors
