@@ -1,13 +1,19 @@
 #!/bin/sh
 PATH=/usr/local/bin:/usr/local/sbin:~/bin:/usr/bin:/bin:/usr/sbin:/sbin
 
-readonly SCRIPT=$(basename "$0")
-readonly VERSION='1.1.1'
+# Defaults
+SCRIPT=$(basename "$0")
+VERSION='1.3.5'
+readonly $SCRIPT
+readonly $VERSION
+PICTURE_DIR="$HOME/Pictures/bing-wallpapers/"
 RESOLUTIONS=(1920x1200 1920x1080 1024x768 1280x720 1366x768 UHD)
 MONITOR="0" # 0 means all monitors
 PLIST_FILE="$HOME/Library/LaunchAgents/com.bing-wallpaper-daily-mac-multimonitor"
 AUTO_UPDATE_NAME="default"
 ARGS=$@
+DAY='0'
+PROTO='http'
 
 usage() {
 cat <<EOF
@@ -23,7 +29,7 @@ Options:
                                  the picture if the filename already exists.
   --auto-update-name <name>      Name of your auto update when enabling/disabling
                                  Using custom name enables setting multiple automatic update configurations.
-                                 Eg. Set on monitor 1 todays wallpaper and on monitor 2 wallpaper from yesterday                                                           
+                                 Eg. Set on monitor 1 todays wallpaper and on monitor 2 wallpaper from yesterday
   -f --force                     Force download of picture. This will overwrite
                                  the picture if the filename already exists.
   -s --ssl                       Communicate with bing.com over SSL.
@@ -48,7 +54,7 @@ Options:
                                  Fixing osascript bug when wallpaper is not set for Desktop 2.
                                  Known issue: Minimized apps are removed from Dock.
                                  If something goes wrong delete Library/Application Support/Dock/desktoppicture.db
-                                 and restart your Mac.                    
+                                 and restart your Mac.
   -h --help                      Show this screen.
   --version                      Show version.
 EOF
@@ -57,7 +63,7 @@ EOF
 create_plist_in_users_agents_folder() {
     local SCRIPT_PATH=$( cd -- "$( dirname -- "${BASH_SOURCE[0]}" )" &> /dev/null && pwd )/$(basename "${BASH_SOURCE:-$0}")
     local REST_ARGS=$(echo "$ARGS" | sed -e "s/enable-auto-update//")
-    
+
     if [ $RUN_USING_NPX ]; then
         local COMMANDS="<string>source ~/.bashrc && npx --yes bing-wallpaper-daily-mac-multimonitor@latest $REST_ARGS</string>"
     else
@@ -84,7 +90,7 @@ create_plist_in_users_agents_folder() {
         <key>PATH</key>
         <string>/usr/local/bin:/usr/local/sbin:/usr/bin:/bin:/usr/sbin:/sbin</string>
     </dict>
-     <key>StandardErrorPath</key>
+    <key>StandardErrorPath</key>
     <string>/tmp/bing-wallpaper-daily-mac-multimonitor-plist.err</string>
     <key>StandardOutPath</key>
     <string>/tmp/bing-wallpaper-daily-mac-multimonitor-plist.out</string>
@@ -96,8 +102,8 @@ create_plist_in_users_agents_folder() {
 </plist>
 EOM
 
-launchctl unload -w $PLIST_FILE 2>/dev/null
-launchctl load -w $PLIST_FILE 
+    launchctl unload -w $PLIST_FILE 2>/dev/null
+    launchctl load -w $PLIST_FILE
 }
 
 remove_plist_in_users_agents_folder() {
@@ -114,15 +120,16 @@ print_message() {
 download_image_curl () {
     local RES=$1
     FILEURLWITHRES="${FILEURL}_${RES}.jpg"
-    echo $FILEURLWITHRES
+    print_message "New file name is $FILEURLWITHRES"
     FILENAME=${FILEURLWITHRES/\/th\?id=/}
     FILENAME_LOCAL="${AUTO_UPDATE_NAME}-${FILENAME}"
     FILEWHOLEURL="$PROTO://bing.com/$FILEURLWITHRES"
+    print_message "Final download URL is $FILEWHOLEURL"
 
     if [ $FORCE ] || [ ! -f "$PICTURE_DIR/$FILENAME_LOCAL" ]; then
         find $PICTURE_DIR -type f -iname $AUTO_UPDATE_NAME-\*.jpg -delete
         print_message "Downloading: $FILENAME..."
-        curl --fail -Lo "$PICTURE_DIR/$FILENAME_LOCAL" "$FILEWHOLEURL"
+        curl --fail $CURL_QUIET -Lo "$PICTURE_DIR/$FILENAME_LOCAL" "$FILEWHOLEURL"
         if [ "$?" == "0" ]; then
             FILEPATH="$PICTURE_DIR/$FILENAME_LOCAL"
             return
@@ -143,20 +150,22 @@ set_wallpaper () {
     local MONITOR=$2
 
     if [ "$MONITOR" -ge 1 ] 2>/dev/null; then
-    print_message "Setting wallpaper for monitor: $MONITOR"
-    osascript - << EOF
-        set tlst to {}
-        tell application "System Events"
-            set tlst to a reference to every desktop
-            set picture of item $MONITOR of tlst to "$FILEPATH"
-        end tell
+        print_message "Setting wallpaper for monitor: $MONITOR"
+        osascript - << EOF
+            set tlst to {}
+            tell application "System Events"
+                set tlst to a reference to every desktop
+                set picture of item $MONITOR of tlst to "$FILEPATH"
+            end tell
 EOF
     else
+        print_message "Setting wallpaper for all monitors through System Events"
         osascript -e 'tell application "System Events" to tell every desktop to set picture to "'$FILEPATH'"'
     fi
 }
 
 set_wallpaper_experimental () {
+    print_message "Setting wallpaper using experimental option: updating the Dock SQLite DB directly"
     local db_file="Library/Application Support/Dock/desktoppicture.db"
     local db_path="$HOME/$db_file"
 
@@ -192,9 +201,6 @@ set_wallpaper_experimental () {
     killall "Dock"
 }
 
-# Defaults
-PICTURE_DIR="$HOME/Pictures/bing-wallpapers/"
-
 # Option parsing
 while [[ $# -gt 0 ]]; do
     key="$1"
@@ -219,7 +225,7 @@ while [[ $# -gt 0 ]]; do
             shift
             ;;
         -c|--country)
-            COUNTRY="$2"
+            COUNTRY="&mkt=$2"
             shift
             ;;
         -d|--day)
@@ -238,10 +244,11 @@ while [[ $# -gt 0 ]]; do
             FORCE=true
             ;;
         -s|--ssl)
-            SSL=true
+            PROTO='https'
             ;;
         -q|--quiet)
             QUIET=true
+            CURL_QUIET='-s'
             ;;
         -h|--help)
             usage
@@ -268,29 +275,26 @@ while [[ $# -gt 0 ]]; do
 done
 
 # Set options
-[ $QUIET ] && CURL_QUIET='-s'
-[ $SSL ]   && PROTO='https'   || PROTO='http'
-[ $DAY ]   && IDX=$DAY   || IDX='0'
-BING_HP_IMAGE_ARCHIVE_URL="https://www.bing.com/HPImageArchive.aspx?format=xml&idx=${IDX}&n=1"
-[ $COUNTRY ]   && BING_HP_IMAGE_ARCHIVE_URL="${BING_HP_IMAGE_ARCHIVE_URL}&mkt=${COUNTRY}"
+BING_HP_IMAGE_ARCHIVE_URL="https://www.bing.com/HPImageArchive.aspx?format=xml&idx=${DAY}&n=1${COUNTRY}"
 PLIST_FILE="${PLIST_FILE}-${AUTO_UPDATE_NAME}.plist"
 
 PARENT_COMMAND=$(ps -o comm= $PPID)
 if [[ "$PARENT_COMMAND" == *"npm exec"* ]]; then
-  RUN_USING_NPX=true
+    RUN_USING_NPX=true
+    print_message "Script detected that it is running by NPM or NPX"
 fi
 
 if [ "$ENABLE_AUTOMATIC_UPDATE" ]; then
 # enable update
 create_plist_in_users_agents_folder
-echo "Automatic wallpaper update enabled"
+print_message "Automatic wallpaper update enabled"
 exit 1
 fi
 
 if [ "$DISABLE_AUTOMATIC_UPDATE" ]; then
 # disable update
 remove_plist_in_users_agents_folder
-echo "Automatic wallpaper update disabled"
+print_message "Automatic wallpaper update disabled"
 exit 1
 fi
 
