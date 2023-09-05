@@ -21,6 +21,7 @@ Options:
                                  the picture if the filename already exists.
   disable-auto-update            Disable automatic update of wallpapers every day
                                  the picture if the filename already exists.
+  info                           Show description of the photo.
   --auto-update-name <name>      Name of your auto update when enabling/disabling
                                  Using custom name enables setting multiple automatic update configurations.
                                  Eg. Set on monitor 1 todays wallpaper and on monitor 2 wallpaper from yesterday                                                           
@@ -105,6 +106,15 @@ remove_plist_in_users_agents_folder() {
     rm "$PLIST_FILE"
 }
 
+show_info_text() {
+    # Parse HPImageArchive API and acquire picture BASE URL
+COPYRIGHT=$(cat "$PICTURE_DIR/info.xml" | \
+    grep -Eo "<copyright>.*<\/copyright>")
+COPYRIGHT=$(echo "$COPYRIGHT" | sed -e "s/<copyright>//")
+COPYRIGHT=$(echo "$COPYRIGHT" | sed -e "s/<\/copyright>//")
+echo $COPYRIGHT
+}
+
 print_message() {
     if [ ! "$QUIET" ]; then
         printf "%s\n" "$(date): ${1}"
@@ -123,6 +133,7 @@ download_image_curl () {
         find $PICTURE_DIR -type f -iname $AUTO_UPDATE_NAME-\*.jpg -delete
         print_message "Downloading: $FILENAME..."
         curl --fail -Lo "$PICTURE_DIR/$FILENAME_LOCAL" "$FILEWHOLEURL"
+        curl --fail -Lo "$PICTURE_DIR/info.xml" "$BING_HP_IMAGE_ARCHIVE_URL"
         if [ "$?" == "0" ]; then
             FILEPATH="$PICTURE_DIR/$FILENAME_LOCAL"
             return
@@ -205,6 +216,9 @@ while [[ $# -gt 0 ]]; do
             ;;
         disable-auto-update)
             DISABLE_AUTOMATIC_UPDATE=true
+            ;;
+        info)
+            INFO=true
             ;;
         --auto-update-name)
             AUTO_UPDATE_NAME="$2"
@@ -291,6 +305,11 @@ if [ "$DISABLE_AUTOMATIC_UPDATE" ]; then
 # disable update
 remove_plist_in_users_agents_folder
 echo "Automatic wallpaper update disabled"
+exit 1
+fi
+
+if [ "$INFO" ]; then
+show_info_text
 exit 1
 fi
 
