@@ -39,6 +39,7 @@ See all parameters providing parameter `--help`
                                  the picture if the filename already exists.
   disable-auto-update            Disable automatic update of wallpapers every day
                                  the picture if the filename already exists.
+  info                           Show description of current wallpaper.
   --auto-update-name <name>      Name of your auto update when enabling/disabling
                                  Using custom name enables setting multiple automatic update configurations.
                                  Eg. Set on monitor 1 todays wallpaper and on monitor 2 wallpaper from yesterday                                                           

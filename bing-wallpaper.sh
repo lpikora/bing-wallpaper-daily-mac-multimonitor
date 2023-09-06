@@ -312,8 +312,8 @@ exit 1
 fi
 
 if [ "$INFO" ]; then
-show_info_text
-exit 1
+  show_info_text
+  exit 1
 fi
 
 # Create picture directory if it doesn't already exist
