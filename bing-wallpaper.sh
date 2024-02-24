@@ -60,7 +60,7 @@ create_plist_in_users_agents_folder() {
     local REST_ARGS=$(echo "$ARGS" | sed -e "s/enable-auto-update//")
     
     if [ $RUN_USING_NPX ]; then
-        local COMMANDS="<string>source ~/.bashrc && npx --yes bing-wallpaper-daily-mac-multimonitor@latest $REST_ARGS</string>"
+        local COMMANDS="<string>source ~/.bashrc &amp;&amp; npx --yes bing-wallpaper-daily-mac-multimonitor@latest $REST_ARGS</string>"
     else
         local COMMANDS="<string>$SCRIPT_PATH $REST_ARGS</string>"
     fi
