@@ -128,22 +128,35 @@ download_image_curl () {
     FILENAME=${FILEURLWITHRES/\/th\?id=/}
     FILENAME_LOCAL="${AUTO_UPDATE_NAME}-${FILENAME}"
     FILEWHOLEURL="$PROTO://bing.com/$FILEURLWITHRES"
+    local DEST="$PICTURE_DIR/$FILENAME_LOCAL"
 
-    if [ $FORCE ] || [ ! -f "$PICTURE_DIR/$FILENAME_LOCAL" ]; then
-        find $PICTURE_DIR -type f -iname $AUTO_UPDATE_NAME-\*.jpg -delete
+    if [ $FORCE ] || [ ! -f "$DEST" ]; then
         print_message "Downloading: $FILENAME..."
-        curl --fail -Lo "$PICTURE_DIR/$FILENAME_LOCAL" "$FILEWHOLEURL"
-        curl --fail -Lo "$PICTURE_DIR/info.xml" "$BING_HP_IMAGE_ARCHIVE_URL"
-        if [ "$?" == "0" ]; then
-            FILEPATH="$PICTURE_DIR/$FILENAME_LOCAL"
+
+        # Download to a temporary file first. Writing straight to $DEST leaves a
+        # truncated image behind when the transfer is interrupted, and removing
+        # the previous wallpaper before the new one has arrived points the
+        # desktop at a file that no longer exists.
+        local TMP="$DEST.part"
+        if ! curl --fail -Lo "$TMP" "$FILEWHOLEURL"; then
+            rm -f "$TMP"
+            FILEPATH=""
             return
         fi
+        mv -f "$TMP" "$DEST"
 
-        FILEPATH=""
+        # Only now that the new wallpaper is safely on disk is it safe to drop
+        # the older ones.
+        find "$PICTURE_DIR" -type f -iname "$AUTO_UPDATE_NAME-*.jpg" \
+            ! -iname "$FILENAME_LOCAL" -delete
+
+        curl --fail -Lo "$PICTURE_DIR/info.xml" "$BING_HP_IMAGE_ARCHIVE_URL" || true
+
+        FILEPATH="$DEST"
         return
     else
         print_message "Skipping download: $FILENAME_LOCAL..."
-        FILEPATH="$PICTURE_DIR/$FILENAME_LOCAL"
+        FILEPATH="$DEST"
         DOWNLOAD_SKIPPED=true
         return
     fi
@@ -168,11 +181,12 @@ EOF
 }
 
 set_wallpaper_experimental () {
+    local WALLPAPER=$1
     local db_file="Library/Application Support/Dock/desktoppicture.db"
     local db_path="$HOME/$db_file"
 
     # Put the image path in the database
-    local sql="insert into data values(\"$FILEPATH\"); "
+    local sql="insert into data values(\"$WALLPAPER\"); "
     sqlite3 "$db_path" "$sql"
 
     # Get the index of the new entry
@@ -327,7 +341,7 @@ if [ $RESOLUTION ]; then
     if [ "$FILEPATH" ]; then
         if [ "$EXPERIMENTAL" ]; then
             if [ ! "$DOWNLOAD_SKIPPED" ]; then
-                set_wallpaper_experimental $FILEPATH
+                set_wallpaper_experimental "$FILEPATH"
             fi
         else
             set_wallpaper $FILEPATH $MONITOR
@@ -342,7 +356,7 @@ for RESOLUTION in "${RESOLUTIONS[@]}"
         if [ "$FILEPATH" ]; then
             if [ "$EXPERIMENTAL" ]; then
                 if [ ! "$DOWNLOAD_SKIPPED" ]; then
-                    set_wallpaper_experimental $
+                    set_wallpaper_experimental "$FILEPATH"
                 fi
             else
                 set_wallpaper $FILEPATH $MONITOR
